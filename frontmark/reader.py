@@ -29,6 +29,7 @@ log = logging.getLogger(__name__)
 DELIMITER = '---'
 BOUNDARY = re.compile(r'^{0}$'.format(DELIMITER), re.MULTILINE)
 STR_TAG = 'tag:yaml.org,2002:str'
+TIMESTAMP_TAG = 'tag:yaml.org,2002:timestamp'
 
 INTERNAL_LINK = re.compile(r'^%7B(\w+)%7D')
 
@@ -202,6 +203,10 @@ class FrontmarkReader(BaseReader):
             def construct_mapping(self, node, deep=False):
                 '''User OrderedDict as default for mappings'''
                 return collections.OrderedDict(self.construct_pairs(node))
+
+        # pelican.utils.get_date() crashes when receiving datetime.datetime objects. It expects str.
+        # A workaround is to construct timestamps as if they were str.
+        FrontmarkLoader.yaml_constructors[TIMESTAMP_TAG] = FrontmarkLoader.yaml_constructors[STR_TAG]
 
         FrontmarkLoader.add_constructor('!md', self.yaml_markdown_constructor)
         if self.settings.get('FRONTMARK_PARSE_LITERAL', True):
